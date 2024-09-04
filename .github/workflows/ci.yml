@@ -1,0 +1,74 @@
+name: CI
+on:
+  push:
+    branches: ["**"]
+    tags: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  fmt:
+    name: rustfmt check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+      - uses: crate-ci/typos@master
+  lint-test:
+    name: clippy lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: cargo clippy
+        run: cargo clippy -- -Dclippy::all -Dclippy::pedantic
+  build-bin:
+    name: build binaries
+    strategy:
+      matrix:
+        target:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: i686-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+          - os: ubuntu-latest
+            target: i686-unknown-linux-musl
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: .exe
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            suffix: .exe
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            suffix: .exe
+    runs-on: ${{matrix.target.os}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: houseabsolute/actions-rust-cross@v0
+        with:
+          target: ${{matrix.target.target}}
+          args: "--release"
+      - uses: actions/upload-artifact@v4
+        with:
+          path: target/${{matrix.target.target}}/release/first${{matrix.target.suffix}}
+          name: first-bin-${{matrix.target.target}}
+      - uses: actions/upload-artifact@v4
+        with:
+          path: target/${{matrix.target.target}}/release/second${{matrix.target.suffix}}
+          name: second-bin-${{matrix.target.target}}

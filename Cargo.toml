@@ -3,4 +3,14 @@ name = "roof"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "first"
+path = "src/bin/first.rs"
+test = false
+
+[[bin]]
+name = "second"
+path = "src/bin/second.rs"
+test = false
+
 [dependencies]
